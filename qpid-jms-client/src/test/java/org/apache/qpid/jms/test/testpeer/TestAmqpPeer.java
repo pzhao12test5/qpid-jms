@@ -18,13 +18,9 @@
  */
 package org.apache.qpid.jms.test.testpeer;
 
-import static org.apache.qpid.jms.provider.amqp.AmqpSupport.ANONYMOUS_RELAY;
-import static org.apache.qpid.jms.provider.amqp.AmqpSupport.DELAYED_DELIVERY;
 import static org.apache.qpid.jms.provider.amqp.AmqpSupport.DYNAMIC_NODE_LIFETIME_POLICY;
 import static org.apache.qpid.jms.provider.amqp.AmqpSupport.GLOBAL;
 import static org.apache.qpid.jms.provider.amqp.AmqpSupport.SHARED;
-import static org.apache.qpid.jms.provider.amqp.AmqpSupport.SHARED_SUBS;
-import static org.apache.qpid.jms.provider.amqp.AmqpSupport.SOLE_CONNECTION_CAPABILITY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -36,7 +32,6 @@ import static org.hamcrest.Matchers.nullValue;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -144,7 +139,6 @@ public class TestAmqpPeer implements AutoCloseable
     private static final UnsignedByte SASL_FAIL_AUTH = UnsignedByte.valueOf((byte)1);
     private static final int CONNECTION_CHANNEL = 0;
     private static final int DEFAULT_PRODUCER_CREDIT = 100;
-    private static final Symbol[] DEFAULT_DESIRED_CAPABILITIES = new Symbol[] { SOLE_CONNECTION_CAPABILITY, DELAYED_DELIVERY, ANONYMOUS_RELAY, SHARED_SUBS};
 
     private volatile AssertionError _firstAssertionError = null;
     private final TestAmqpPeerRunner _driverRunnable;
@@ -701,8 +695,8 @@ public class TestAmqpPeer implements AutoCloseable
 
     public void expectSaslPlain(String username, String password)
     {
-        byte[] usernameBytes = username.getBytes(StandardCharsets.UTF_8);
-        byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
+        byte[] usernameBytes = username.getBytes();
+        byte[] passwordBytes = password.getBytes();
         byte[] data = new byte[usernameBytes.length+passwordBytes.length+2];
         System.arraycopy(usernameBytes, 0, data, 1, usernameBytes.length);
         System.arraycopy(passwordBytes, 0, data, 2 + usernameBytes.length, passwordBytes.length);
@@ -815,11 +809,7 @@ public class TestAmqpPeer implements AutoCloseable
     }
 
     public void expectOpen(Map<Symbol, Object> serverProperties) {
-        expectOpen(DEFAULT_DESIRED_CAPABILITIES, new Symbol[] { AmqpSupport.SOLE_CONNECTION_CAPABILITY }, null, serverProperties, null, null, false);
-    }
-
-    public void expectOpen(Map<Symbol, Object> serverProperties, Symbol[] serverCapabilities) {
-        expectOpen(DEFAULT_DESIRED_CAPABILITIES, serverCapabilities, null, serverProperties, null, null, false);
+        expectOpen(new Symbol[] { AmqpSupport.SOLE_CONNECTION_CAPABILITY }, new Symbol[] { AmqpSupport.SOLE_CONNECTION_CAPABILITY }, null, serverProperties, null, null, false);
     }
 
     public void expectOpen(Matcher<?> clientPropertiesMatcher, Matcher<?> hostnameMatcher, boolean deferOpened) {
@@ -827,7 +817,11 @@ public class TestAmqpPeer implements AutoCloseable
     }
 
     public void expectOpen(Matcher<?> clientPropertiesMatcher, Matcher<?> idleTimeoutMatcher, Matcher<?> hostnameMatcher, boolean deferOpened) {
-        expectOpen(DEFAULT_DESIRED_CAPABILITIES, new Symbol[] { AmqpSupport.SOLE_CONNECTION_CAPABILITY }, clientPropertiesMatcher, null, null, hostnameMatcher, deferOpened);
+        expectOpen(new Symbol[] { AmqpSupport.SOLE_CONNECTION_CAPABILITY }, new Symbol[] { AmqpSupport.SOLE_CONNECTION_CAPABILITY }, clientPropertiesMatcher, null, null, hostnameMatcher, deferOpened);
+    }
+
+    public void expectOpen(Symbol[] desiredCapabilities, Symbol[] serverCapabilities, Map<Symbol, Object> serverProperties) {
+        expectOpen(desiredCapabilities, serverCapabilities, null, serverProperties, null, null, false);
     }
 
     public void sendPreemptiveServerOpenFrame() {
@@ -1582,11 +1576,6 @@ public class TestAmqpPeer implements AutoCloseable
 
     public void expectDetach(boolean expectClosed, boolean sendResponse, boolean replyClosed)
     {
-        expectDetach(expectClosed, sendResponse, replyClosed, null, null);
-    }
-
-    public void expectDetach(boolean expectClosed, boolean sendResponse, boolean replyClosed, Symbol errorType, String errorMessage)
-    {
         Matcher<Boolean> closeMatcher = null;
         if(expectClosed)
         {
@@ -1605,15 +1594,6 @@ public class TestAmqpPeer implements AutoCloseable
             if(replyClosed)
             {
                 detachResponse.setClosed(replyClosed);
-            }
-
-            if (errorType != null) {
-                org.apache.qpid.jms.test.testpeer.describedtypes.Error detachError = new org.apache.qpid.jms.test.testpeer.describedtypes.Error();
-                detachError.setCondition(errorType);
-                detachError.setDescription(errorMessage);
-                detachResponse.setError(detachError);
-            } else {
-                detachResponse.setError(null);
             }
 
             // The response frame channel will be dynamically set based on the incoming frame. Using the -1 is an illegal placeholder.

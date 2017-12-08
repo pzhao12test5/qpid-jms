@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -14,7 +13,8 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
---><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <parent>
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
@@ -24,7 +24,7 @@
 
   <groupId>org.apache.qpid</groupId>
   <artifactId>qpid-jms-parent</artifactId>
-  <version>0.28.0-SNAPSHOT</version>
+  <version>0.25.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>QpidJMS</name>
   <inceptionYear>2013</inceptionYear>
@@ -34,22 +34,25 @@
       QpidJMS is a JMS framework featuring support for AMQP v1.0
   </description>
 
+  <prerequisites>
+    <maven>3.0.4</maven>
+  </prerequisites>
+
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
     <!-- Dependency Versions for this Project -->
-    <proton-version>0.23.0</proton-version>
-    <netty-version>4.1.17.Final</netty-version>
+    <proton-version>0.22.0</proton-version>
+    <netty-version>4.1.14.Final</netty-version>
     <slf4j-version>1.7.25</slf4j-version>
     <geronimo.jms.2.spec.version>1.0-alpha-2</geronimo.jms.2.spec.version>
-
     <!-- Test Dependency Versions for this Project -->
-    <activemq-version>5.15.2</activemq-version>
+    <activemq-version>5.15.0</activemq-version>
     <junit-version>4.12</junit-version>
     <fuse-joram-tests-version>1.0</fuse-joram-tests-version>
     <jetty-version>9.4.6.v20170531</jetty-version>
-    <mockito-version>2.11.0</mockito-version>
+    <mockito-version>2.8.47</mockito-version>
     <hamcrest-version>1.3</hamcrest-version>
     <hadoop-minikdc-version>2.8.1</hadoop-minikdc-version>
 
@@ -71,7 +74,10 @@
 
     <netty-transport-native-epoll-classifier>linux-x86_64</netty-transport-native-epoll-classifier>
     <netty-transport-native-kqueue-classifier>osx-x86_64</netty-transport-native-kqueue-classifier>
-  </properties>
+  <gib.commitRange>${env.TRAVIS_COMMIT_RANGE}</gib.commitRange>
+        <gib.enabled>true</gib.enabled>
+        <gib.useEkstazi>true</gib.useEkstazi>
+    </properties>
 
   <issueManagement>
     <url>https://issues.apache.org/jira/browse/QPIDJMS</url>
@@ -303,11 +309,21 @@
             <exclude>**/*.truststore</exclude>
             <exclude>**/*.crt</exclude>
             <exclude>**/*.csr</exclude>
-          </excludes>
+          <exclude>**/.ekstazi/**</exclude>
+                        <exclude>**/.travis.yml</exclude>
+                        <exclude>**/NOW</exclude>
+                    </excludes>
         </configuration>
       </plugin>
     </plugins>
-  </build>
+  <extensions>
+            <extension>
+                <groupId>edu.illinois</groupId>
+                <artifactId>incremental-builder-with-ekstazi</artifactId>
+                <version>3.5.0</version>
+            </extension>
+        </extensions>
+    </build>
 
   <reporting>
     <plugins>
@@ -342,3 +358,4 @@
     </profile>
   </profiles>
 </project>
+

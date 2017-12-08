@@ -261,7 +261,12 @@ public class NettyTcpTransport implements Transport {
     public void send(ByteBuf output) throws IOException {
         checkConnected(output);
 
-        LOG.trace("Attempted write of: {} bytes", output.readableBytes());
+        int length = output.readableBytes();
+        if (length == 0) {
+            return;
+        }
+
+        LOG.trace("Attempted write of: {} bytes", length);
 
         channel.writeAndFlush(output);
     }
